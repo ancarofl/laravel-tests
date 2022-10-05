@@ -28,19 +28,14 @@ class TestController extends Controller
 	}
 
 	public function unblocked(Request $request) {
-		$user = User::with('blockedusers')->findOrFail($request['user_id']);
+		$user = User::findOrFail($request['user_id']);
 		$blockedUserIds = $user->blockedusers()->get()->pluck('id');
-
-		$users = User::select('*')
-		->when(count($blockedUserIds)>0, function($query) use ($blockedUserIds)
-				{
-					$query->whereDoesntHave("blockedusers", function ($query) use ($blockedUserIds)
-					{
-						$query->whereIn("blocked_id",$blockedUserIds);
-					});
-				})
-		->get();
-
-		dd($users);
+		
+		count($blockedUserIds) ? $users = User::whereNot('id',$user->id)->whereNotIn('id', $blockedUserIds)->get() : $users = User::whereNot('id',$user->id)->get();
+		
+		// dd($users);
+		return view('result', [
+			'users' => $users, 
+		]);
 	}
 }
